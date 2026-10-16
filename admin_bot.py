@@ -16,13 +16,14 @@ def admin_start(message):
     markup.add(
         types.KeyboardButton("📢 ব্রডকাস্ট মেসেজ"),
         types.KeyboardButton("📊 পেন্ডিং সাবমিশন চেক"),
-        types.KeyboardButton("💰 উইথড্র রিকোয়েস্ট")
+        types.KeyboardButton("💰 উইথড্র রিকোয়েস্ট"),
+        types.KeyboardButton("⚙️ সেটিংস ও কন্ট্রোল")
     )
-    bot.reply_to(message, "স্বাগতম বস! এটি আপনার এডমিন প্যানেল।", reply_markup=markup)
+    bot.reply_to(message, "👑 **স্বাগতম বস!** এটি আপনার মাস্টার এডমিন প্যানেল।", parse_mode="Markdown", reply_markup=markup)
 
 @bot.message_handler(func=lambda message: message.from_user.id == ADMIN_ID and message.text == "📢 ব্রডকাস্ট মেসেজ")
 def broadcast_prompt(message):
-    msg = bot.reply_to(message, "সব ইউজারের কাছে যে মেসেজটি পাঠাতে চান সেটি লিখুন:")
+    msg = bot.reply_to(message, "📢 সকল ইউজারের কাছে যে নোটিশ বা মেসেজটি পাঠাতে চান তা লিখে পাঠান:")
     bot.register_next_step_handler(msg, send_broadcast)
 
 def send_broadcast(message):
@@ -40,7 +41,7 @@ def send_broadcast(message):
         except:
             pass
             
-    bot.send_message(ADMIN_ID, f"সফলভাবে {count} জন ইউজারের কাছে ব্রডকাস্ট মেসেজ পাঠানো হয়েছে।")
+    bot.send_message(ADMIN_ID, f"✅ সফলভাবে `{count}` জন ইউজারের কাছে ব্রডকাস্ট মেসেজ পাঠানো হয়েছে।", parse_mode="Markdown")
 
 @bot.message_handler(func=lambda message: message.from_user.id == ADMIN_ID and message.text == "💰 উইথড্র রিকোয়েস্ট")
 def check_withdraws(message):
@@ -51,16 +52,16 @@ def check_withdraws(message):
     conn.close()
     
     if not withdraws:
-        bot.reply_to(message, "কোনো পেন্ডিং উইথড্র রিকোয়েস্ট নেই।")
+        bot.reply_to(message, "📭 বর্তমানে কোনো পেন্ডিং উইথড্র রিকোয়েস্ট নেই।")
         return
         
     for w in withdraws:
         w_id, u_id, amt, method, info = w
-        msg = f"""💸 **উইথড্র রিকোয়েস্ট ID: {w_id}**
+        msg = f"""💸 **উইথড্র রিকোয়েস্ট (ID: {w_id})**
 👤 ইউজার আইডি: `{u_id}`
-💵 পরিমাণ: {amt} BDT
-📱 মেথড: {method}
-ℹ️ একাউন্ট তথ্য: {info}"""
+💵 পরিমাণ: `{amt} BDT`
+📱 মেথড: `{method}`
+ℹ️ তথ্য: `{info}`"""
         
         markup = types.InlineKeyboardMarkup()
         markup.add(
@@ -84,17 +85,17 @@ def handle_withdraw_action(call):
         cursor.execute("UPDATE withdraws SET status = 'Approved' WHERE id = ?", (w_id,))
         cursor.execute("UPDATE users SET pending_withdraw = pending_withdraw - ?, total_income = total_income + ?, completed_tasks = completed_tasks + 1 WHERE user_id = ?", (amt, amt, u_id))
         conn.commit()
-        bot.send_message(int(u_id), f"🎉 আপনার উইথড্র রিকোয়েস্ট এপ্রুভ হয়েছে! {amt} BDT পেমেন্ট সম্পন্ন করা হয়েছে।")
-        bot.edit_message_text(f"✅ উইথড্র ID {w_id} এপ্রুভ করা হয়েছে।", call.message.chat.id, call.message.message_id)
+        bot.send_message(int(u_id), f"🎉 আপনার উইথড্র রিকোয়েস্ট এপ্রুভ হয়েছে! `{amt} BDT` পেমেন্ট সফলভাবে সম্পন্ন করা হয়েছে।", parse_mode="Markdown")
+        bot.edit_message_text(f"✅ উইথড্র ID {w_id} সফলভাবে এপ্রুভ করা হয়েছে।", call.message.chat.id, call.message.message_id)
     else:
         cursor.execute("UPDATE withdraws SET status = 'Rejected' WHERE id = ?", (w_id,))
         cursor.execute("UPDATE users SET balance = balance + ?, pending_withdraw = pending_withdraw - ? WHERE user_id = ?", (amt, amt, u_id))
         conn.commit()
-        bot.send_message(int(u_id), f"❌ আপনার উইথড্র রিকোয়েস্ট রিজেক্ট করা হয়েছে। আপনার টাকা ব্যালেন্সে ফেরত দেওয়া হয়েছে।")
+        bot.send_message(int(u_id), f"❌ আপনার উইথড্র রিকোয়েস্ট রিজেক্ট করা হয়েছে। আপনার টাকা মূল ব্যালেন্সে ফেরত দেওয়া হয়েছে।", parse_mode="Markdown")
         bot.edit_message_text(f"❌ উইথড্র ID {w_id} রিজেক্ট করা হয়েছে।", call.message.chat.id, call.message.message_id)
         
     conn.close()
 
 if __name__ == '__main__':
-    print("Admin Bot is running...")
+    print("Admin Bot is running professionally...")
     bot.polling(none_stop=True)
